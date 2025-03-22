@@ -1,14 +1,115 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, EyeOff } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { useAuth } from '@/context/AuthContext';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Login form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  
+  // Register form state
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [gender, setGender] = useState<'male' | 'female' | ''>('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { signIn, signUp, user } = useAuth();
+  
+  useEffect(() => {
+    // If user is already logged in, redirect to home page
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+  
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      
+      toast({
+        title: "Muvaffaqiyatli kirish!",
+        description: "Tizimga muvaffaqiyatli kirdingiz.",
+      });
+      
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!termsAccepted) {
+      setError('Shartlar va qoidalarni qabul qilishingiz kerak');
+      return;
+    }
+    
+    if (!gender) {
+      setError('Jinsni tanlang');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await signUp(
+        registerEmail, 
+        registerPassword, 
+        {
+          first_name: firstName,
+          last_name: lastName,
+          gender
+        }
+      );
+      
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      
+      toast({
+        title: "Muvaffaqiyatli ro'yxatdan o'tdingiz!",
+        description: "Hisobingiz yaratildi. Email manzilingizni tasdiqlang.",
+      });
+      
+    } catch (err: any) {
+      setError(err.message || "Ro'yxatdan o'tib bo'lmadi");
+    } finally {
+      setLoading(false);
+    }
+  };
   
   return (
     <div className="min-h-screen flex flex-col page-transition">
@@ -22,28 +123,35 @@ const Login = () => {
               <TabsTrigger value="register">Ro'yxatdan o'tish</TabsTrigger>
             </TabsList>
             
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
             <TabsContent value="login">
-              <div className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label htmlFor="email-login" className="block text-sm font-medium text-foreground mb-1">
-                    Email
-                  </label>
-                  <input
+                  <Label htmlFor="email-login">Email</Label>
+                  <Input
                     type="email"
                     id="email-login"
-                    className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="password-login" className="block text-sm font-medium text-foreground mb-1">
-                    Parol
-                  </label>
+                  <Label htmlFor="password-login">Parol</Label>
                   <div className="relative">
-                    <input
+                    <Input
                       type={showPassword ? "text" : "password"}
                       id="password-login"
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
                     />
                     <button
                       type="button"
@@ -61,6 +169,8 @@ const Login = () => {
                       type="checkbox"
                       id="remember-me"
                       className="h-4 w-4 text-primary border-border rounded focus:ring-primary"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
                     />
                     <label htmlFor="remember-me" className="ml-2 block text-sm text-foreground">
                       Eslab qolish
@@ -74,60 +184,62 @@ const Login = () => {
                   </div>
                 </div>
                 
-                <Button className="w-full">
-                  Kirish
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Kirish...' : 'Kirish'}
                 </Button>
-              </div>
+              </form>
             </TabsContent>
             
             <TabsContent value="register">
-              <div className="space-y-4">
+              <form onSubmit={handleRegister} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="first-name" className="block text-sm font-medium text-foreground mb-1">
-                      Ism
-                    </label>
-                    <input
+                    <Label htmlFor="first-name">Ism</Label>
+                    <Input
                       type="text"
                       id="first-name"
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="last-name" className="block text-sm font-medium text-foreground mb-1">
-                      Familiya
-                    </label>
-                    <input
+                    <Label htmlFor="last-name">Familiya</Label>
+                    <Input
                       type="text"
                       id="last-name"
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <label htmlFor="email-register" className="block text-sm font-medium text-foreground mb-1">
-                    Email
-                  </label>
-                  <input
+                  <Label htmlFor="email-register">Email</Label>
+                  <Input
                     type="email"
                     id="email-register"
-                    className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    value={registerEmail}
+                    onChange={(e) => setRegisterEmail(e.target.value)}
+                    required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Jins
-                  </label>
-                  <div className="flex space-x-4">
+                  <Label>Jins</Label>
+                  <div className="flex space-x-4 mt-2">
                     <div className="flex items-center">
                       <input
                         type="radio"
                         id="gender-male"
                         name="gender"
                         className="h-4 w-4 text-primary border-border focus:ring-primary"
+                        value="male"
+                        checked={gender === 'male'}
+                        onChange={() => setGender('male')}
+                        required
                       />
                       <label htmlFor="gender-male" className="ml-2 block text-sm text-foreground">
                         Erkak
@@ -139,6 +251,9 @@ const Login = () => {
                         id="gender-female"
                         name="gender"
                         className="h-4 w-4 text-primary border-border focus:ring-primary"
+                        value="female"
+                        checked={gender === 'female'}
+                        onChange={() => setGender('female')}
                       />
                       <label htmlFor="gender-female" className="ml-2 block text-sm text-foreground">
                         Ayol
@@ -148,14 +263,15 @@ const Login = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="password-register" className="block text-sm font-medium text-foreground mb-1">
-                    Parol
-                  </label>
+                  <Label htmlFor="password-register">Parol</Label>
                   <div className="relative">
-                    <input
+                    <Input
                       type={showPassword ? "text" : "password"}
                       id="password-register"
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      value={registerPassword}
+                      onChange={(e) => setRegisterPassword(e.target.value)}
+                      required
+                      minLength={6}
                     />
                     <button
                       type="button"
@@ -172,6 +288,8 @@ const Login = () => {
                     type="checkbox"
                     id="terms"
                     className="h-4 w-4 text-primary border-border rounded focus:ring-primary"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
                   />
                   <label htmlFor="terms" className="ml-2 block text-sm text-foreground">
                     <span>Men </span>
@@ -182,10 +300,10 @@ const Login = () => {
                   </label>
                 </div>
                 
-                <Button className="w-full">
-                  Ro'yxatdan o'tish
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Ro'yxatdan o'tilmoqda..." : "Ro'yxatdan o'tish"}
                 </Button>
-              </div>
+              </form>
             </TabsContent>
           </Tabs>
         </div>

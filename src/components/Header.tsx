@@ -1,14 +1,24 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Menu, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Menu, X, LogOut, User } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { useAuth } from '@/context/AuthContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/books?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <header className="glass-card sticky top-0 z-50 py-4 px-6 mb-6">
@@ -38,7 +48,7 @@ const Header = () => {
           <Link to="/donate" className="text-foreground hover:text-primary button-transition">
             Homiylik
           </Link>
-          <div className="relative">
+          <form onSubmit={handleSearch} className="relative">
             <input
               type="text"
               placeholder="Kitob qidirish..."
@@ -47,12 +57,28 @@ const Header = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          </div>
-          <Link to="/login">
-            <Button variant="outline" className="ml-4">
-              Kirish
-            </Button>
-          </Link>
+            <button type="submit" className="sr-only">Qidirish</button>
+          </form>
+          
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <Link to="/profile">
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+              <Button variant="outline" onClick={signOut} size="sm">
+                <LogOut className="h-4 w-4 mr-2" />
+                Chiqish
+              </Button>
+            </div>
+          ) : (
+            <Link to="/login">
+              <Button variant="outline">
+                Kirish
+              </Button>
+            </Link>
+          )}
         </div>
 
         <button className="md:hidden text-foreground" onClick={toggleMenu}>
@@ -77,7 +103,7 @@ const Header = () => {
             <Link to="/donate" className="text-foreground hover:text-primary py-2" onClick={toggleMenu}>
               Homiylik
             </Link>
-            <div className="relative">
+            <form onSubmit={handleSearch} className="relative">
               <input
                 type="text"
                 placeholder="Kitob qidirish..."
@@ -86,12 +112,29 @@ const Header = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            </div>
-            <Link to="/login" onClick={toggleMenu}>
-              <Button variant="outline" className="w-full">
-                Kirish
-              </Button>
-            </Link>
+              <button type="submit" className="sr-only">Qidirish</button>
+            </form>
+            
+            {user ? (
+              <div className="space-y-2">
+                <Link to="/profile" onClick={toggleMenu}>
+                  <Button variant="outline" className="w-full">
+                    <User className="h-4 w-4 mr-2" />
+                    Profil
+                  </Button>
+                </Link>
+                <Button variant="outline" onClick={signOut} className="w-full">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Chiqish
+                </Button>
+              </div>
+            ) : (
+              <Link to="/login" onClick={toggleMenu}>
+                <Button variant="outline" className="w-full">
+                  Kirish
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       )}
