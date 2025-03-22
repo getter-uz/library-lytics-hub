@@ -10,6 +10,7 @@ import Books from "./pages/Books";
 import BookDetail from "./pages/BookDetail";
 import Donate from "./pages/Donate";
 import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/books/:id" element={<BookDetail />} />
             <Route path="/donate" element={<Donate />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
