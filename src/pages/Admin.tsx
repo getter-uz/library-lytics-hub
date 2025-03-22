@@ -1,0 +1,420 @@
+
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { 
+  BookOpen, 
+  Users, 
+  BarChart, 
+  Settings, 
+  PlusCircle, 
+  Edit, 
+  Trash, 
+  Search,
+  ChevronLeft,
+  BookMarked,
+  Clock,
+  AlertTriangle,
+  UserPlus
+} from 'lucide-react';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import StatCard from '../components/StatCard';
+import { mockBooks, mockUsers, mockStats } from '../utils/mockData';
+
+const Admin = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  return (
+    <div className="min-h-screen flex flex-col page-transition">
+      <Header />
+      
+      <main className="flex-grow page-container py-6">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center">
+            <Link to="/" className="mr-4">
+              <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+            </Link>
+            <h1 className="text-2xl font-bold">Admin Panel</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Qidirish..."
+                className="pl-10 pr-4 py-2 rounded-lg text-sm border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            </div>
+            <Button>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              <span>Yangi kitob</span>
+            </Button>
+          </div>
+        </div>
+        
+        <Tabs defaultValue="dashboard">
+          <TabsList className="mb-8">
+            <TabsTrigger value="dashboard" className="flex items-center">
+              <BarChart className="h-4 w-4 mr-2" />
+              <span>Statistika</span>
+            </TabsTrigger>
+            <TabsTrigger value="books" className="flex items-center">
+              <BookOpen className="h-4 w-4 mr-2" />
+              <span>Kitoblar</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center">
+              <Users className="h-4 w-4 mr-2" />
+              <span>Foydalanuvchilar</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center">
+              <Settings className="h-4 w-4 mr-2" />
+              <span>Sozlamalar</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="dashboard">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <StatCard
+                title="Jami kitoblar"
+                value={mockStats.totalBooks}
+                icon={<BookOpen className="h-6 w-6" />}
+                trend={{ value: 5, isPositive: true }}
+              />
+              <StatCard
+                title="Jami o'quvchilar"
+                value={mockStats.totalReaders}
+                icon={<Users className="h-6 w-6" />}
+                trend={{ value: 12, isPositive: true }}
+              />
+              <StatCard
+                title="Berilgan kitoblar"
+                value={mockStats.totalBorrowedBooks}
+                icon={<BookMarked className="h-6 w-6" />}
+                trend={{ value: 3, isPositive: true }}
+              />
+              <StatCard
+                title="Muddati o'tgan"
+                value={mockStats.overdueBooks}
+                icon={<AlertTriangle className="h-6 w-6" />}
+                trend={{ value: 2, isPositive: false }}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="glass-card p-6">
+                <h2 className="font-medium mb-4">So'nggi faoliyat</h2>
+                <div className="space-y-4">
+                  {[
+                    { user: "Abdulaziz Kamolov", action: "kitob oldi", book: "Hadis va Hayot", time: "5 daqiqa oldin" },
+                    { user: "Malika Rahimova", action: "kitob qaytardi", book: "Iqtisod Asoslari", time: "2 soat oldin" },
+                    { user: "Admin", action: "yangi kitob qo'shdi", book: "Ruhiy Tarbiya", time: "5 soat oldin" },
+                    { user: "Shohruh Ismoilov", action: "ro'yxatdan o'tdi", book: "", time: "1 kun oldin" },
+                    { user: "Admin", action: "kitob yangiladi", book: "Farzand Tarbiyasi", time: "2 kun oldin" }
+                  ].map((activity, index) => (
+                    <div key={index} className="flex items-start">
+                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
+                        {activity.action.includes("kitob oldi") ? (
+                          <BookOpen className="h-4 w-4" />
+                        ) : activity.action.includes("qaytardi") ? (
+                          <BookMarked className="h-4 w-4" />
+                        ) : activity.action.includes("qo'shdi") || activity.action.includes("yangiladi") ? (
+                          <Edit className="h-4 w-4" />
+                        ) : (
+                          <UserPlus className="h-4 w-4" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm">
+                          <span className="font-medium">{activity.user}</span>
+                          <span className="text-muted-foreground"> {activity.action} </span>
+                          {activity.book && <span className="font-medium">{activity.book}</span>}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{activity.time}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="glass-card p-6">
+                <h2 className="font-medium mb-4">Tez yordam</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Button variant="outline" className="justify-start">
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    <span>Yangi kitob qo'shish</span>
+                  </Button>
+                  <Button variant="outline" className="justify-start">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    <span>Foydalanuvchi qo'shish</span>
+                  </Button>
+                  <Button variant="outline" className="justify-start">
+                    <BookMarked className="h-4 w-4 mr-2" />
+                    <span>Kitob berish</span>
+                  </Button>
+                  <Button variant="outline" className="justify-start">
+                    <Clock className="h-4 w-4 mr-2" />
+                    <span>Muddati o'tganlar</span>
+                  </Button>
+                </div>
+                
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium mb-3">Tez statistika</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Bugun berilgan kitoblar</span>
+                      <span className="text-sm font-medium">{mockStats.borrowedToday}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Shu hafta berilgan kitoblar</span>
+                      <span className="text-sm font-medium">{mockStats.borrowedThisWeek}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Shu oy berilgan kitoblar</span>
+                      <span className="text-sm font-medium">{mockStats.borrowedThisMonth}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Erkaklar / Ayollar</span>
+                      <span className="text-sm font-medium">
+                        {mockStats.genderDistribution.male} / {mockStats.genderDistribution.female}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="books">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-medium">Barcha kitoblar ({mockBooks.length})</h2>
+              <Button>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                <span>Yangi kitob</span>
+              </Button>
+            </div>
+            
+            <div className="glass-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Sarlavha</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Muallif</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Kategoriya</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Nashr yili</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Holati</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">Amallar</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mockBooks.map((book) => (
+                      <tr key={book.id} className="border-b border-border hover:bg-muted/20">
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center">
+                            <img
+                              src={book.coverImage}
+                              alt={book.title}
+                              className="h-10 w-7 object-cover rounded mr-3"
+                            />
+                            {book.title}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">{book.author}</td>
+                        <td className="px-4 py-3 text-sm">{book.category}</td>
+                        <td className="px-4 py-3 text-sm">{book.publishedYear}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            book.isAvailable 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {book.isAvailable ? 'Mavjud' : 'Berilgan'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center justify-center space-x-2">
+                            <button className="p-1 text-muted-foreground hover:text-primary">
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button className="p-1 text-muted-foreground hover:text-destructive">
+                              <Trash className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="users">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-medium">Barcha foydalanuvchilar ({mockUsers.length})</h2>
+              <Button>
+                <UserPlus className="h-4 w-4 mr-2" />
+                <span>Yangi foydalanuvchi</span>
+              </Button>
+            </div>
+            
+            <div className="glass-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Ism</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Email</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Jins</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Kitoblar</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Rol</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">Amallar</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mockUsers.map((user) => (
+                      <tr key={user.id} className="border-b border-border hover:bg-muted/20">
+                        <td className="px-4 py-3 text-sm">{user.name}</td>
+                        <td className="px-4 py-3 text-sm">{user.email}</td>
+                        <td className="px-4 py-3 text-sm">{user.gender === 'male' ? 'Erkak' : 'Ayol'}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center">
+                            <span className="mr-2">{user.borrowedBooks.length} berilgan</span>
+                            <span>/ {user.readBooks.length} o'qilgan</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            user.isAdmin 
+                              ? 'bg-purple-100 text-purple-800' 
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {user.isAdmin ? 'Admin' : 'Foydalanuvchi'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center justify-center space-x-2">
+                            <button className="p-1 text-muted-foreground hover:text-primary">
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button className="p-1 text-muted-foreground hover:text-destructive">
+                              <Trash className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="settings">
+            <div className="glass-card p-6 max-w-3xl">
+              <h2 className="font-medium mb-6">Tizim sozlamalari</h2>
+              
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Asosiy ma'lumotlar</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="library-name" className="block text-sm text-muted-foreground mb-1">
+                        Kutubxona nomi
+                      </label>
+                      <input
+                        type="text"
+                        id="library-name"
+                        defaultValue="Kutubxona"
+                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="library-address" className="block text-sm text-muted-foreground mb-1">
+                        Kutubxona manzili
+                      </label>
+                      <input
+                        type="text"
+                        id="library-address"
+                        defaultValue="Toshkent, Uzbekistan"
+                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="library-phone" className="block text-sm text-muted-foreground mb-1">
+                        Aloqa telefoni
+                      </label>
+                      <input
+                        type="text"
+                        id="library-phone"
+                        defaultValue="+998 90 123 45 67"
+                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Tizim sozlamalari</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Kitob berish muddati</p>
+                        <p className="text-xs text-muted-foreground">Standart kitob berish muddati</p>
+                      </div>
+                      <select className="px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        <option>7 kun</option>
+                        <option>14 kun</option>
+                        <option selected>21 kun</option>
+                        <option>30 kun</option>
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Muddati o'tgan jarimasi</p>
+                        <p className="text-xs text-muted-foreground">Har bir kechikkan kun uchun jarima</p>
+                      </div>
+                      <input
+                        type="number"
+                        defaultValue="1000"
+                        className="w-32 px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Foydalanuvchi kitoblari</p>
+                        <p className="text-xs text-muted-foreground">Bir vaqtda olinishi mumkin bo'lgan kitoblar soni</p>
+                      </div>
+                      <input
+                        type="number"
+                        defaultValue="3"
+                        className="w-32 px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="pt-4">
+                  <Button>
+                    <Settings className="h-4 w-4 mr-2" />
+                    <span>Saqlash</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
+      
+      <Footer />
+    </div>
+  );
+};
+
+export default Admin;
