@@ -6,17 +6,22 @@ import { Button } from "@/components/ui/button";
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BookCard from '../components/BookCard';
-import { mockBooks } from '../utils/mockData';
+import { useQuery } from '@tanstack/react-query';
+import { fetchBooks } from '../services/api';
 import { Book, BookCategory } from '../utils/types';
 
 const Books = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [books, setBooks] = useState<Book[]>([]);
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<BookCategory | 'all'>('all');
   const [availabilityFilter, setAvailabilityFilter] = useState<'all' | 'available' | 'borrowed'>('all');
   const [showFilters, setShowFilters] = useState(false);
+
+  const { data: books, isLoading, error } = useQuery({
+    queryKey: ['books'],
+    queryFn: fetchBooks,
+  });
 
   // Categories
   const categories: BookCategory[] = [
@@ -32,9 +37,6 @@ const Books = () => {
   ];
 
   useEffect(() => {
-    // Load books
-    setBooks(mockBooks);
-    
     // Check for URL parameters
     const category = searchParams.get('category');
     if (category) {
@@ -43,6 +45,8 @@ const Books = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    if (!books) return;
+    
     // Apply filters
     let result = [...books];
     
@@ -184,22 +188,42 @@ const Books = () => {
           )}
         </div>
         
-        {/* Results count */}
-        <p className="text-muted-foreground mb-6">
-          {filteredBooks.length} ta kitob topildi
-        </p>
-        
-        {/* Books Grid */}
-        {filteredBooks.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredBooks.map((book) => (
-              <BookCard key={book.id} book={book} />
-            ))}
+        {/* Results count and loading state */}
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12 text-destructive">
+            <p>Ma'lumotlarni yuklashda xatolik yuz berdi.</p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              Qayta urinib ko'ring
+            </Button>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Kitoblar topilmadi. Boshqa so'rov bilan urinib ko'ring.</p>
-          </div>
+          <>
+            {/* Results count */}
+            <p className="text-muted-foreground mb-6">
+              {filteredBooks.length} ta kitob topildi
+            </p>
+            
+            {/* Books Grid */}
+            {filteredBooks.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {filteredBooks.map((book) => (
+                  <BookCard key={book.id} book={book} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Kitoblar topilmadi. Boshqa so'rov bilan urinib ko'ring.</p>
+              </div>
+            )}
+          </>
         )}
       </main>
       
