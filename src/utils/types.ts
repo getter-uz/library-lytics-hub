@@ -1,16 +1,18 @@
 
 export interface Book {
-  id: string;
-  title: string;
-  author: string;
-  coverImage: string;
-  category: BookCategory;
-  isAvailable: boolean;
-  description: string;
-  publishedYear: number;
-  totalBorrows: number;
-  currentReader?: string;
-  dueDate?: Date;
+  id: number;
+  name: string;
+  author?: {
+    name: string;
+  };
+  category?: string;
+  publishedYear?: string;
+  stocks?: {
+    busy: boolean;
+  }[];
+  image?: string;
+  totalBorrows?: number;
+  description?: string;
 }
 
 export type BookCategory = 
@@ -34,30 +36,53 @@ export interface User {
   readBooks: string[];
 }
 
-export interface Stats {
-  totalReaders: number;
-  totalBorrowedBooks: number;
-  totalBooksRead: number;
-  totalBooks: number;
-  genderDistribution: {
-    male: number;
-    female: number;
-  };
-  currentlyBeingRead: number;
-  overdueBooks: number;
-  borrowedToday: number;
-  borrowedThisWeek: number;
-  borrowedThisMonth: number;
-  borrowedLast24Hours: number;
-  mostReadBooksThisWeek: Book[];
-  top100Books: Book[];
+export interface Librarian {
+  lastName: string;
+  count: string;
+  user_id: number;
 }
 
-export interface DonationNeeds {
-  id: string;
-  title: string;
-  author: string;
-  reason: string;
-  priority: 'high' | 'medium' | 'low';
-  estimatedPrice: number;
+export interface Gender {
+  male: string;
+  female: string;
+}
+
+export interface DailyRent {
+  day: string;
+  count: string;
+}
+
+export interface TopBookLastWeek {
+  count: string;
+  name: string;
+  id: number;
+}
+
+export interface FewBook {
+  total: string;
+  bookId: number;
+  name: string;
+  busies: string;
+  few?: number;
+}
+
+export interface Stats {
+  top_librarians: Librarian[];
+  gender: Gender;
+  reading_books_count: string;
+  librarians_count: string;
+  books_count: string;
+  top_books: Book[];
+  rents_count: number;
+  expired_leases: string;
+  dayly_leasing_books_avarage_count_of_last_month: number;
+  leased_books_count_of_last_month: string;
+  leased_books_count_of_last_week: string;
+  leased_books_count_of_last_24_hours: string;
+  one_month_leased_rents_by_day: DailyRent[];
+  one_month_returned_rents_by_day: DailyRent[];
+  top_books_last_week: TopBookLastWeek[];
+  new_users_count_last_month: number;
+  new_users_count_last_24_hours: number;
+  few_books: FewBook[];
 }

@@ -26,7 +26,7 @@ const Index = () => {
   // Get featured books (top 4 by total borrows)
   const featuredBooks = books && Array.isArray(books) 
     ? [...books]
-        .sort((a: Book, b: Book) => (b.totalBorrows || 0) - (a.totalBorrows || 0))
+        .sort((a: Book, b: Book) => ((b.totalBorrows || 0) - (a.totalBorrows || 0)))
         .slice(0, 4)
     : [];
 
@@ -91,14 +91,14 @@ const Index = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <StatCard
                 title="Jami o'quvchilar"
-                value={stats.librarians_count || 0}
+                value={Number(stats.librarians_count) || 0}
                 icon={<Users className="h-6 w-6" />}
                 trend={{ value: 12, isPositive: true }}
               />
               
               <StatCard
                 title="Jami kitoblar"
-                value={stats.books_count || 0}
+                value={Number(stats.books_count) || 0}
                 icon={<BookOpen className="h-6 w-6" />}
                 trend={{ value: 5, isPositive: true }}
               />
@@ -112,13 +112,13 @@ const Index = () => {
               
               <StatCard
                 title="Hozirda o'qilayotgan"
-                value={stats.reading_books_count || 0}
+                value={Number(stats.reading_books_count) || 0}
                 icon={<Clock className="h-6 w-6" />}
               />
               
               <StatCard
                 title="Shu oyda berilgan"
-                value={stats.leased_books_count_of_last_month || 0}
+                value={Number(stats.leased_books_count_of_last_month) || 0}
                 icon={<TrendingUp className="h-6 w-6" />}
                 trend={{ value: 15, isPositive: true }}
               />

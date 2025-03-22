@@ -51,3 +51,28 @@ export async function fetchBookById(id: string) {
     throw error;
   }
 }
+
+export async function fetchUsers() {
+  // This is a mock function until we implement Supabase
+  // Return mock users data
+  return [
+    {
+      id: '1',
+      name: 'Abdulloh',
+      email: 'abdulloh@example.com',
+      gender: 'male',
+      isAdmin: true,
+      borrowedBooks: ['1', '2'],
+      readBooks: ['3', '4', '5']
+    },
+    {
+      id: '2',
+      name: 'Fatima',
+      email: 'fatima@example.com',
+      gender: 'female',
+      isAdmin: false,
+      borrowedBooks: ['6'],
+      readBooks: ['7', '8']
+    },
+  ];
+}
