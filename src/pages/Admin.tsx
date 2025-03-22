@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,13 +16,14 @@ import {
   BookMarked,
   Clock,
   AlertTriangle,
-  UserPlus
+  UserPlus,
+  TrendingUp
 } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import StatCard from '../components/StatCard';
 import { useQuery } from '@tanstack/react-query';
-import { fetchBooks, fetchStats } from '../services/api';
+import { fetchBooks, fetchStats, fetchUsers } from '../services/api';
 import { Book } from '../utils/types';
 
 const Admin = () => {
@@ -37,7 +39,12 @@ const Admin = () => {
     queryFn: fetchBooks,
   });
 
-  const isLoading = statsLoading || booksLoading;
+  const { data: users, isLoading: usersLoading } = useQuery({
+    queryKey: ['users'],
+    queryFn: fetchUsers,
+  });
+
+  const isLoading = statsLoading || booksLoading || usersLoading;
   const error = statsError || booksError;
   
   return (
@@ -111,25 +118,25 @@ const Admin = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   <StatCard
                     title="Jami kitoblar"
-                    value={stats.totalBooks}
+                    value={Number(stats.books_count) || 0}
                     icon={<BookOpen className="h-6 w-6" />}
                     trend={{ value: 5, isPositive: true }}
                   />
                   <StatCard
                     title="Jami o'quvchilar"
-                    value={stats.totalReaders}
+                    value={Number(stats.librarians_count) || 0}
                     icon={<Users className="h-6 w-6" />}
                     trend={{ value: 12, isPositive: true }}
                   />
                   <StatCard
                     title="Berilgan kitoblar"
-                    value={stats.totalBorrowedBooks}
+                    value={Number(stats.reading_books_count) || 0}
                     icon={<BookMarked className="h-6 w-6" />}
                     trend={{ value: 3, isPositive: true }}
                   />
                   <StatCard
                     title="Muddati o'tgan"
-                    value={stats.overdueBooks}
+                    value={Number(stats.expired_leases) || 0}
                     icon={<AlertTriangle className="h-6 w-6" />}
                     trend={{ value: 2, isPositive: false }}
                   />
@@ -198,20 +205,20 @@ const Admin = () => {
                         <div className="space-y-3">
                           <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Bugun berilgan kitoblar</span>
-                            <span className="text-sm font-medium">{stats.borrowedToday}</span>
+                            <span className="text-sm font-medium">{stats.leased_books_count_of_last_24_hours}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Shu hafta berilgan kitoblar</span>
-                            <span className="text-sm font-medium">{stats.borrowedThisWeek}</span>
+                            <span className="text-sm font-medium">{stats.leased_books_count_of_last_week}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Shu oy berilgan kitoblar</span>
-                            <span className="text-sm font-medium">{stats.borrowedThisMonth}</span>
+                            <span className="text-sm font-medium">{stats.leased_books_count_of_last_month}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Erkaklar / Ayollar</span>
                             <span className="text-sm font-medium">
-                              {stats.genderDistribution.male} / {stats.genderDistribution.female}
+                              {stats.gender.male} / {stats.gender.female}
                             </span>
                           </div>
                         </div>
@@ -267,23 +274,23 @@ const Admin = () => {
                           <td className="px-4 py-3 text-sm">
                             <div className="flex items-center">
                               <img
-                                src={book.coverImage}
-                                alt={book.title}
+                                src={book.image || 'https://via.placeholder.com/70x100'}
+                                alt={book.name}
                                 className="h-10 w-7 object-cover rounded mr-3"
                               />
-                              {book.title}
+                              {book.name}
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-sm">{book.author}</td>
-                          <td className="px-4 py-3 text-sm">{book.category}</td>
-                          <td className="px-4 py-3 text-sm">{book.publishedYear}</td>
+                          <td className="px-4 py-3 text-sm">{book.author?.name || 'Nomalum'}</td>
+                          <td className="px-4 py-3 text-sm">{book.category || 'Nomalum'}</td>
+                          <td className="px-4 py-3 text-sm">{book.publishedYear || 'Nomalum'}</td>
                           <td className="px-4 py-3 text-sm">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              book.isAvailable 
+                              book.stocks && book.stocks.some(stock => !stock.busy)
                                 ? 'bg-green-100 text-green-800' 
                                 : 'bg-red-100 text-red-800'
                             }`}>
-                              {book.isAvailable ? 'Mavjud' : 'Berilgan'}
+                              {book.stocks && book.stocks.some(stock => !stock.busy) ? 'Mavjud' : 'Berilgan'}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-sm">
@@ -311,7 +318,7 @@ const Admin = () => {
           
           <TabsContent value="users">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="font-medium">Barcha foydalanuvchilar ({mockUsers.length})</h2>
+              <h2 className="font-medium">Barcha foydalanuvchilar ({users ? users.length : 0})</h2>
               <Button>
                 <UserPlus className="h-4 w-4 mr-2" />
                 <span>Yangi foydalanuvchi</span>
@@ -332,7 +339,7 @@ const Admin = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {mockUsers.map((user) => (
+                    {users && users.map((user) => (
                       <tr key={user.id} className="border-b border-border hover:bg-muted/20">
                         <td className="px-4 py-3 text-sm">{user.name}</td>
                         <td className="px-4 py-3 text-sm">{user.email}</td>

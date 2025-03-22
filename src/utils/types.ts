@@ -86,3 +86,12 @@ export interface Stats {
   new_users_count_last_24_hours: number;
   few_books: FewBook[];
 }
+
+export interface DonationNeeds {
+  id: string;
+  title: string;
+  author: string;
+  reason: string;
+  priority: 'high' | 'medium' | 'low';
+  estimatedPrice: number;
+}
