@@ -24,9 +24,9 @@ const Index = () => {
   });
 
   // Get featured books (top 4 by total borrows)
-  const featuredBooks = books 
+  const featuredBooks = books && Array.isArray(books) 
     ? [...books]
-        .sort((a: Book, b: Book) => b.totalBorrows - a.totalBorrows)
+        .sort((a: Book, b: Book) => (b.totalBorrows || 0) - (a.totalBorrows || 0))
         .slice(0, 4)
     : [];
 
@@ -91,41 +91,41 @@ const Index = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <StatCard
                 title="Jami o'quvchilar"
-                value={stats.totalReaders}
+                value={stats.librarians_count || 0}
                 icon={<Users className="h-6 w-6" />}
                 trend={{ value: 12, isPositive: true }}
               />
               
               <StatCard
                 title="Jami kitoblar"
-                value={stats.totalBooks}
+                value={stats.books_count || 0}
                 icon={<BookOpen className="h-6 w-6" />}
                 trend={{ value: 5, isPositive: true }}
               />
               
               <StatCard
                 title="O'qilgan kitoblar"
-                value={stats.totalBooksRead}
+                value={stats.rents_count || 0}
                 icon={<BookMarked className="h-6 w-6" />}
                 trend={{ value: 8, isPositive: true }}
               />
               
               <StatCard
                 title="Hozirda o'qilayotgan"
-                value={stats.currentlyBeingRead}
+                value={stats.reading_books_count || 0}
                 icon={<Clock className="h-6 w-6" />}
               />
               
               <StatCard
                 title="Shu oyda berilgan"
-                value={stats.borrowedThisMonth}
+                value={stats.leased_books_count_of_last_month || 0}
                 icon={<TrendingUp className="h-6 w-6" />}
                 trend={{ value: 15, isPositive: true }}
               />
               
               <StatCard
                 title="Eng faol o'quvchilar"
-                value="87"
+                value={stats.top_librarians ? stats.top_librarians.length : 0}
                 icon={<Award className="h-6 w-6" />}
                 description="so'nggi 30 kunda"
               />

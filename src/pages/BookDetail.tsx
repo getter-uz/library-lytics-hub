@@ -18,6 +18,9 @@ const BookDetail = () => {
     enabled: !!id,
   });
   
+  // Check if any stock is available
+  const isAvailable = book?.stocks && book.stocks.some(stock => !stock.busy);
+  
   return (
     <div className="min-h-screen flex flex-col page-transition">
       <Header />
@@ -49,42 +52,37 @@ const BookDetail = () => {
               <div className="md:col-span-1">
                 <div className="relative">
                   <img
-                    src={book.coverImage}
-                    alt={book.title}
+                    src={book.image || 'https://placehold.co/600x400?text=No+Image'}
+                    alt={book.name}
                     className="w-full rounded-lg shadow-md object-cover object-center"
                   />
-                  <div className={`absolute top-2 right-2 px-3 py-1 text-sm font-medium text-white rounded-full ${book.isAvailable ? 'bg-green-500' : 'bg-red-500'}`}>
-                    {book.isAvailable ? 'Mavjud' : 'Berilgan'}
+                  <div className={`absolute top-2 right-2 px-3 py-1 text-sm font-medium text-white rounded-full ${isAvailable ? 'bg-green-500' : 'bg-red-500'}`}>
+                    {isAvailable ? 'Mavjud' : 'Berilgan'}
                   </div>
                 </div>
                 
                 <div className="mt-6 space-y-4">
                   <div className="flex items-center text-muted-foreground">
                     <BookOpen className="h-5 w-5 mr-2" />
-                    <span>Kategoriya: <span className="text-foreground">{book.category}</span></span>
+                    <span>Kategoriya: <span className="text-foreground">{book.category || 'General'}</span></span>
                   </div>
                   
-                  <div className="flex items-center text-muted-foreground">
-                    <CalendarDays className="h-5 w-5 mr-2" />
-                    <span>Nashr yili: <span className="text-foreground">{book.publishedYear}</span></span>
-                  </div>
+                  {book.updatedAt && (
+                    <div className="flex items-center text-muted-foreground">
+                      <CalendarDays className="h-5 w-5 mr-2" />
+                      <span>Yangilangan: <span className="text-foreground">
+                        {new Date(book.updatedAt).toLocaleDateString()}
+                      </span></span>
+                    </div>
+                  )}
                   
                   <div className="flex items-center text-muted-foreground">
                     <UserCheck className="h-5 w-5 mr-2" />
-                    <span>O'qilgan: <span className="text-foreground">{book.totalBorrows} marta</span></span>
+                    <span>Fond: <span className="text-foreground">{book.stocks ? book.stocks.length : 0} nusxa</span></span>
                   </div>
-                  
-                  {!book.isAvailable && book.dueDate && (
-                    <div className="flex items-center text-muted-foreground">
-                      <User className="h-5 w-5 mr-2" />
-                      <span>Qaytarilish kuni: <span className="text-foreground">
-                        {new Date(book.dueDate).toLocaleDateString()}
-                      </span> ({formatDistanceToNow(new Date(book.dueDate), { addSuffix: true })})</span>
-                    </div>
-                  )}
                 </div>
                 
-                {book.isAvailable && (
+                {isAvailable && (
                   <Button className="w-full mt-6">
                     Kitobni olish
                   </Button>
@@ -92,14 +90,14 @@ const BookDetail = () => {
               </div>
               
               <div className="md:col-span-2">
-                <h1 className="text-3xl font-bold mb-2">{book.title}</h1>
-                <p className="text-xl text-muted-foreground mb-6">{book.author}</p>
+                <h1 className="text-3xl font-bold mb-2">{book.name}</h1>
+                <p className="text-xl text-muted-foreground mb-6">{book.author?.name || 'Unknown Author'}</p>
                 
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-medium mb-3">Kitob haqida</h2>
                     <p className="text-muted-foreground leading-relaxed">
-                      {book.description}
+                      {book.description || 'Bu kitob haqida ma\'lumot yo\'q.'}
                     </p>
                   </div>
                   
