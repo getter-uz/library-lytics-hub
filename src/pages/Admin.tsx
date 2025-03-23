@@ -33,6 +33,9 @@ import { supabase } from '@/integrations/supabase/client';
 const Admin = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isNewBookDialogOpen, setIsNewBookDialogOpen] = useState(false);
+  const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false);
+  const [isLeaseBooksDialogOpen, setIsLeaseBooksDialogOpen] = useState(false);
+  const [isExpiredBooksDialogOpen, setIsExpiredBooksDialogOpen] = useState(false);
   const [newBook, setNewBook] = useState({
     name: '',
     author: '',
@@ -40,6 +43,13 @@ const Admin = () => {
     publishedYear: '',
     description: '',
     image: ''
+  });
+  const [newUser, setNewUser] = useState({
+    email: '',
+    password: '',
+    first_name: '',
+    last_name: '',
+    gender: ''
   });
   const { toast } = useToast();
   
@@ -92,6 +102,59 @@ const Admin = () => {
       description: '',
       image: ''
     });
+  };
+
+  const handleAddUser = async () => {
+    try {
+      // Register the user in Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email: newUser.email,
+        password: newUser.password,
+        options: {
+          data: {
+            first_name: newUser.first_name,
+            last_name: newUser.last_name,
+            gender: newUser.gender
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        // Create profile for the user
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          first_name: newUser.first_name,
+          last_name: newUser.last_name,
+          gender: newUser.gender,
+          updated_at: new Date().toISOString()
+        });
+      }
+
+      toast({
+        title: "Foydalanuvchi qo'shildi",
+        description: "Yangi foydalanuvchi muvaffaqiyatli qo'shildi",
+      });
+      
+      setIsNewUserDialogOpen(false);
+      setNewUser({
+        email: '',
+        password: '',
+        first_name: '',
+        last_name: '',
+        gender: ''
+      });
+      
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Xatolik yuz berdi",
+        description: error.message || "Foydalanuvchi qo'shib bo'lmadi",
+      });
+    }
   };
   
   return (
@@ -226,19 +289,19 @@ const Admin = () => {
                   <div className="glass-card p-6">
                     <h2 className="font-medium mb-4">Tez yordam</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Button variant="outline" className="justify-start">
+                      <Button variant="outline" className="justify-start" onClick={() => setIsNewBookDialogOpen(true)}>
                         <PlusCircle className="h-4 w-4 mr-2" />
                         <span>Yangi kitob qo'shish</span>
                       </Button>
-                      <Button variant="outline" className="justify-start">
+                      <Button variant="outline" className="justify-start" onClick={() => setIsNewUserDialogOpen(true)}>
                         <UserPlus className="h-4 w-4 mr-2" />
                         <span>Foydalanuvchi qo'shish</span>
                       </Button>
-                      <Button variant="outline" className="justify-start">
+                      <Button variant="outline" className="justify-start" onClick={() => setIsLeaseBooksDialogOpen(true)}>
                         <BookMarked className="h-4 w-4 mr-2" />
                         <span>Kitob berish</span>
                       </Button>
-                      <Button variant="outline" className="justify-start">
+                      <Button variant="outline" className="justify-start" onClick={() => setIsExpiredBooksDialogOpen(true)}>
                         <Clock className="h-4 w-4 mr-2" />
                         <span>Muddati o'tganlar</span>
                       </Button>
@@ -364,7 +427,7 @@ const Admin = () => {
           <TabsContent value="users">
             <div className="flex justify-between items-center mb-6">
               <h2 className="font-medium">Barcha foydalanuvchilar ({users ? users.length : 0})</h2>
-              <Button>
+              <Button onClick={() => setIsNewUserDialogOpen(true)}>
                 <UserPlus className="h-4 w-4 mr-2" />
                 <span>Yangi foydalanuvchi</span>
               </Button>
@@ -589,6 +652,113 @@ const Admin = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsNewBookDialogOpen(false)}>Bekor qilish</Button>
             <Button onClick={handleAddBook}>Kitobni qo'shish</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New User Dialog */}
+      <Dialog open={isNewUserDialogOpen} onOpenChange={setIsNewUserDialogOpen}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle>Yangi foydalanuvchi qo'shish</DialogTitle>
+            <DialogDescription>
+              Yangi foydalanuvchi ma'lumotlarini kiriting. Barcha maydonlarni to'ldiring.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label htmlFor="user-email">Email</Label>
+                <Input
+                  id="user-email"
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                  placeholder="Email manzilini kiriting"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="user-password">Parol</Label>
+                <Input
+                  id="user-password"
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                  placeholder="Parolni kiriting"
+                />
+              </div>
+              <div>
+                <Label htmlFor="user-first-name">Ism</Label>
+                <Input
+                  id="user-first-name"
+                  value={newUser.first_name}
+                  onChange={(e) => setNewUser({...newUser, first_name: e.target.value})}
+                  placeholder="Ismini kiriting"
+                />
+              </div>
+              <div>
+                <Label htmlFor="user-last-name">Familiya</Label>
+                <Input
+                  id="user-last-name"
+                  value={newUser.last_name}
+                  onChange={(e) => setNewUser({...newUser, last_name: e.target.value})}
+                  placeholder="Familiyasini kiriting"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="user-gender">Jinsi</Label>
+                <select
+                  id="user-gender"
+                  value={newUser.gender}
+                  onChange={(e) => setNewUser({...newUser, gender: e.target.value})}
+                  className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">Tanlang</option>
+                  <option value="male">Erkak</option>
+                  <option value="female">Ayol</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNewUserDialogOpen(false)}>Bekor qilish</Button>
+            <Button onClick={handleAddUser}>Foydalanuvchini qo'shish</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Lease Books Dialog */}
+      <Dialog open={isLeaseBooksDialogOpen} onOpenChange={setIsLeaseBooksDialogOpen}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle>Kitob berish</DialogTitle>
+            <DialogDescription>
+              Kitob berish uchun ma'lumotlarni kiriting.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-center text-muted-foreground">Bu funksionallik hali ishga tushirilmagan.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsLeaseBooksDialogOpen(false)}>Yopish</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Expired Books Dialog */}
+      <Dialog open={isExpiredBooksDialogOpen} onOpenChange={setIsExpiredBooksDialogOpen}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle>Muddati o'tgan kitoblar</DialogTitle>
+            <DialogDescription>
+              Muddati o'tgan kitoblar ro'yxati.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-center text-muted-foreground">Bu funksionallik hali ishga tushirilmagan.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsExpiredBooksDialogOpen(false)}>Yopish</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
