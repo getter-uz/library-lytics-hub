@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         first_name,
         last_name,
         gender,
-        updated_at: new Date().toISOString() // Convert Date object to ISO string
+        updated_at: new Date().toISOString()
       });
     }
     
@@ -108,7 +108,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const { error } = await supabase
       .from('profiles')
-      .update(data)
+      .update({
+        ...data,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', user.id);
       
     if (!error) {

@@ -19,15 +19,29 @@ import {
   UserPlus,
   TrendingUp
 } from 'lucide-react';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import Layout from '../components/Layout';
 import StatCard from '../components/StatCard';
 import { useQuery } from '@tanstack/react-query';
-import { fetchBooks, fetchStats, fetchUsers } from '../services/api';
+import { fetchBooks, fetchStats } from '../services/api';
 import { Book } from '../utils/types';
+import { supabase } from '@/integrations/supabase/client';
 
 const Admin = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isNewBookDialogOpen, setIsNewBookDialogOpen] = useState(false);
+  const [newBook, setNewBook] = useState({
+    name: '',
+    author: '',
+    category: '',
+    publishedYear: '',
+    description: '',
+    image: ''
+  });
+  const { toast } = useToast();
   
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['stats'],
@@ -40,18 +54,49 @@ const Admin = () => {
   });
 
   const { data: users, isLoading: usersLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: fetchUsers,
+    queryKey: ['profiles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (error) throw error;
+      
+      return data.map((profile: any) => ({
+        id: profile.id,
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'N/A',
+        email: '', // Email is not stored in profiles table
+        gender: profile.gender || 'N/A',
+        borrowedBooks: [],
+        readBooks: [],
+        isAdmin: false
+      }));
+    },
   });
 
   const isLoading = statsLoading || booksLoading || usersLoading;
   const error = statsError || booksError;
   
+  const handleAddBook = () => {
+    // This would typically submit the new book to your API or Supabase
+    toast({
+      title: "Kitob qo'shildi",
+      description: "Yangi kitob muvaffaqiyatli qo'shildi",
+    });
+    setIsNewBookDialogOpen(false);
+    setNewBook({
+      name: '',
+      author: '',
+      category: '',
+      publishedYear: '',
+      description: '',
+      image: ''
+    });
+  };
+  
   return (
-    <div className="min-h-screen flex flex-col page-transition">
-      <Header />
-      
-      <main className="flex-grow page-container py-6">
+    <Layout>
+      <div className="container max-w-7xl mx-auto py-6">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center">
             <Link to="/" className="mr-4">
@@ -70,7 +115,7 @@ const Admin = () => {
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </div>
-            <Button>
+            <Button onClick={() => setIsNewBookDialogOpen(true)}>
               <PlusCircle className="h-4 w-4 mr-2" />
               <span>Yangi kitob</span>
             </Button>
@@ -233,7 +278,7 @@ const Admin = () => {
           <TabsContent value="books">
             <div className="flex justify-between items-center mb-6">
               <h2 className="font-medium">Barcha kitoblar ({books ? books.length : 0})</h2>
-              <Button>
+              <Button onClick={() => setIsNewBookDialogOpen(true)}>
                 <PlusCircle className="h-4 w-4 mr-2" />
                 <span>Yangi kitob</span>
               </Button>
@@ -331,7 +376,6 @@ const Admin = () => {
                   <thead>
                     <tr className="border-b border-border bg-muted/50">
                       <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Ism</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Email</th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Jins</th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Kitoblar</th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Rol</th>
@@ -342,12 +386,11 @@ const Admin = () => {
                     {users && users.map((user) => (
                       <tr key={user.id} className="border-b border-border hover:bg-muted/20">
                         <td className="px-4 py-3 text-sm">{user.name}</td>
-                        <td className="px-4 py-3 text-sm">{user.email}</td>
-                        <td className="px-4 py-3 text-sm">{user.gender === 'male' ? 'Erkak' : 'Ayol'}</td>
+                        <td className="px-4 py-3 text-sm">{user.gender === 'male' ? 'Erkak' : user.gender === 'female' ? 'Ayol' : 'Kiritilmagan'}</td>
                         <td className="px-4 py-3 text-sm">
                           <div className="flex items-center">
-                            <span className="mr-2">{user.borrowedBooks.length} berilgan</span>
-                            <span>/ {user.readBooks.length} o'qilgan</span>
+                            <span className="mr-2">{user.borrowedBooks?.length || 0} berilgan</span>
+                            <span>/ {user.readBooks?.length || 0} o'qilgan</span>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm">
@@ -473,10 +516,83 @@ const Admin = () => {
             </div>
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
       
-      <Footer />
-    </div>
+      {/* New Book Dialog */}
+      <Dialog open={isNewBookDialogOpen} onOpenChange={setIsNewBookDialogOpen}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle>Yangi kitob qo'shish</DialogTitle>
+            <DialogDescription>
+              Yangi kitob ma'lumotlarini kiriting. Barcha maydonlarni to'ldiring.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label htmlFor="book-title">Kitob nomi</Label>
+                <Input
+                  id="book-title"
+                  value={newBook.name}
+                  onChange={(e) => setNewBook({...newBook, name: e.target.value})}
+                  placeholder="Kitob nomini kiriting"
+                />
+              </div>
+              <div>
+                <Label htmlFor="book-author">Muallif</Label>
+                <Input
+                  id="book-author"
+                  value={newBook.author}
+                  onChange={(e) => setNewBook({...newBook, author: e.target.value})}
+                  placeholder="Muallif ismi"
+                />
+              </div>
+              <div>
+                <Label htmlFor="book-year">Nashr yili</Label>
+                <Input
+                  id="book-year"
+                  value={newBook.publishedYear}
+                  onChange={(e) => setNewBook({...newBook, publishedYear: e.target.value})}
+                  placeholder="Nashr yilini kiriting"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="book-category">Kategoriya</Label>
+                <Input
+                  id="book-category"
+                  value={newBook.category}
+                  onChange={(e) => setNewBook({...newBook, category: e.target.value})}
+                  placeholder="Kitob kategoriyasini kiriting"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="book-image">Rasm URL</Label>
+                <Input
+                  id="book-image"
+                  value={newBook.image}
+                  onChange={(e) => setNewBook({...newBook, image: e.target.value})}
+                  placeholder="Kitob rasmi uchun URL"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="book-description">Tavsif</Label>
+                <textarea
+                  id="book-description"
+                  value={newBook.description}
+                  onChange={(e) => setNewBook({...newBook, description: e.target.value})}
+                  placeholder="Kitob haqida qisqacha ma'lumot"
+                  className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNewBookDialogOpen(false)}>Bekor qilish</Button>
+            <Button onClick={handleAddBook}>Kitobni qo'shish</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Layout>
   );
 };
 
